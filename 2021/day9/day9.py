@@ -1,4 +1,6 @@
 import math
+import numpy as np
+from queue import Queue
 
 def lowPoint(candidate, grid):
     candidate_row = candidate[0]
@@ -18,15 +20,59 @@ def lowPoint(candidate, grid):
     return True;
 
 def part1(grid):
-    risk_levels = []
+    low_points = []
 
     for i in range(1, len(grid) - 1):
         for j in range(1, len(grid[0]) - 1):
             if lowPoint((i,j), grid):
-                risk_levels.append(grid[i][j] + 1)
+                low_points.append((i,j))
 
-    return sum(risk_levels)
+    return low_points
 
+def riskLevels(grid, low_points):
+    low_points = [grid[point[0]][point[1]] + 1 for point in low_points]
+    return sum(low_points)
+
+def bfs(grid, point):
+    search = Queue()
+    search.put(point)
+
+    basin_size = 0
+
+    while not search.empty():
+        active = search.get()
+        row = active[0]
+        col = active[1]
+
+        if grid[row][col] != 9 and grid[row][col] != math.inf and grid[row][col] != -1:
+            basin_size += 1
+        else:
+            continue
+        
+        grid[row][col] = -1
+
+        if grid[row - 1][col] < 9 and grid[row - 1][col] != -1:
+            search.put((row - 1, col))
+
+        if grid[row + 1][col] < 9 and grid[row + 1][col] != -1:
+            search.put((row + 1, col))
+
+        if grid[row][col - 1] < 9 and grid[row][col - 1] != -1:
+            search.put((row, col - 1))
+
+        if grid[row][col + 1] < 9 and grid[row][col + 1] != -1:
+            search.put((row, col + 1))
+    
+    return basin_size
+
+def part2(grid, low_points):
+    basin_sizes = []
+    for point in low_points:
+        basin_sizes.append(bfs(grid, point))
+
+    basin_sizes = sorted(basin_sizes)
+    top_three = basin_sizes[-3:]
+    return np.prod(top_three)
 
     
 def main():
@@ -42,7 +88,10 @@ def main():
     grid.insert(0, pad)
     grid.append(pad)
 
-    print(part1(grid))
+    low_points = part1(grid)
+
+    print(part2(grid, low_points))
+
 
 if __name__ == "__main__":
     main()
